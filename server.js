@@ -1,14 +1,19 @@
 import express from "express";
 import "dotenv/config";
 
+import apiRouter from "./routes/apiRoutes.js";
+
 const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.get("/hello", (req, res) => {
   res.json({ message: "Hello World!" });
 });
 
-const PORT = process.env.PORT || 6000;
+app.use("/api", apiRouter);
 
-console.log("Database URL is ", process.env.DATABASE_URL);
+const PORT = process.env.PORT || 6000;
 
 app.listen(PORT, () => console.log(`Server is running on PORT ${PORT}`));
