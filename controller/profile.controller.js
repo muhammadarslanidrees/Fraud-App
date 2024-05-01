@@ -59,9 +59,15 @@ export class ProfileController {
         },
       });
 
-      res
-        .status(200)
-        .json({ status: 200, message: "User profile updated successfully." });
+      res.status(200).json({
+        status: 200,
+        message: "User profile updated successfully.",
+        data: {
+          name: profile.name,
+          mime: profile.mimetype,
+          size: profile?.size,
+        },
+      });
     } catch (error) {
       return res
         .status(500)
