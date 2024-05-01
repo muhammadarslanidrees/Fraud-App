@@ -1,5 +1,6 @@
 import express from "express";
 import "dotenv/config";
+import fileUpload from "express-fileupload";
 
 import apiRouter from "./routes/router.js";
 
@@ -7,10 +8,7 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-app.get("/hello", (req, res) => {
-  res.json({ message: "Hello World!" });
-});
+app.use(fileUpload());
 
 app.use("/api", apiRouter);
 

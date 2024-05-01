@@ -5,6 +5,7 @@ import { ProfileController } from "../controller/profile.controller.js";
 
 const router = Router();
 
-router.get("/user", JwtMiddleware, ProfileController.getUser);
+router.get("/get", JwtMiddleware, ProfileController.getUser);
+router.put("/update/:id", JwtMiddleware, ProfileController.updateUser);
 
 export default router;
