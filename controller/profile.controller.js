@@ -25,7 +25,7 @@ export class ProfileController {
       }
 
       // get the profile object from req.files
-      const profile = req.files.profile;
+      const profile = req.files.image;
 
       // check the image size and mimetype
       const imageValidationError = imageValidator(
@@ -36,7 +36,7 @@ export class ProfileController {
       if (imageValidationError !== null) {
         return res
           .status(400)
-          .json({ status: 400, errors: { profile: imageValidationError } });
+          .json({ status: 400, errors: { image: imageValidationError } });
       }
 
       // generate the random filename and attach it with file extension
@@ -52,7 +52,7 @@ export class ProfileController {
       // save the new changes in the stored user object
       await prisma.users.update({
         data: {
-          profile: imageName,
+          image: imageName,
         },
         where: {
           id: Number(id),

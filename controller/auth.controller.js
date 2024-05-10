@@ -84,7 +84,7 @@ export class AuthController {
         id: foundUser.id,
         name: foundUser.name,
         email: foundUser.email,
-        profile: foundUser.profile || "",
+        image: foundUser.profile || "",
       };
 
       const token = jwt.sign(jwtPayload, process.env.JWT_SECRET, {

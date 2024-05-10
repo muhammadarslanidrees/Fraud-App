@@ -1,5 +1,6 @@
 import vine, { errors } from "@vinejs/vine";
 
+import { NewsApiTransform } from "../transform/NewsApiTransform.js";
 import { newsSchema } from "../validation/news.validation.js";
 import { generateRandomName, imageValidator } from "../utils/helper.js";
 import prisma from "../DB/db.config.js";
@@ -8,9 +9,24 @@ export class NewsController {
   static async getNews(req, res) {
     try {
       const user = req.user;
-      const news = await prisma.news.findMany({});
-      res.status(200).json({ status: 200, data: news });
+      const news = await prisma.news.findMany({
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+      });
+      const transformNews = news?.map((item) =>
+        NewsApiTransform.transform(item)
+      );
+      res.status(200).json({ status: 200, data: transformNews });
     } catch (error) {
+      console.log({ error });
       return res
         .status(500)
         .json({ status: 500, message: "Something went wrong." });

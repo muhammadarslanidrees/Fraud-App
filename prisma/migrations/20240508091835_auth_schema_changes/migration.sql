@@ -1,6 +1,15 @@
--- AlterTable
-ALTER TABLE "Users" ALTER COLUMN "name" SET DATA TYPE VARCHAR(200),
-ALTER COLUMN "email" SET DATA TYPE VARCHAR(200);
+-- CreateTable
+CREATE TABLE "Users" (
+    "id" SERIAL NOT NULL,
+    "name" VARCHAR(200) NOT NULL,
+    "email" VARCHAR(200) NOT NULL,
+    "password" TEXT NOT NULL,
+    "image" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_At" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "News" (
@@ -14,6 +23,9 @@ CREATE TABLE "News" (
 
     CONSTRAINT "News_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Users_email_key" ON "Users"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "News_title_key" ON "News"("title");
