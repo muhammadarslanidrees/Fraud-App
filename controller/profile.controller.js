@@ -1,5 +1,5 @@
+import { imageValidator, uploadFileLocally } from "../utils/helper.js";
 import prisma from "../DB/db.config.js";
-import { generateRandomName, imageValidator } from "../utils/helper.js";
 
 export class ProfileController {
   static getUser(req, res) {
@@ -15,23 +15,39 @@ export class ProfileController {
 
   static async updateUser(req, res) {
     try {
-      const { id } = req.params;
+      const id = Number(req.params.id);
+      console.log({ id });
+
+      // getting the user using params id
+      const user = await prisma.users.findUnique({
+        where: {
+          id: id,
+        },
+      });
+
+      console.log({ user });
+
+      // checking if the user is same as the one whose account we are updating
+      if (user.id !== id) {
+        console.log("Error inside the if block...");
+        return res
+          .status(400)
+          .json({ status: 400, message: "User is unauthorized." });
+      }
 
       // check whether we have the profile object in req.files
       if (!req.files || Object.keys(req.files).length === 0) {
-        return res
-          .status(400)
-          .json({ status: 400, message: "Profile image is required." });
+        return res.status(400).json({
+          status: 400,
+          errors: { message: "Profile image is required." },
+        });
       }
 
       // get the profile object from req.files
-      const profile = req.files.image;
+      const image = req.files.image;
 
       // check the image size and mimetype
-      const imageValidationError = imageValidator(
-        profile?.size,
-        profile.mimetype
-      );
+      const imageValidationError = imageValidator(image?.size, image.mimetype);
 
       if (imageValidationError !== null) {
         return res
@@ -39,18 +55,14 @@ export class ProfileController {
           .json({ status: 400, errors: { image: imageValidationError } });
       }
 
-      // generate the random filename and attach it with file extension
-      const imageExtension = profile.name.split(".")[1];
-      const imageName = generateRandomName() + "." + imageExtension;
-
-      // construct the local file path to save the file locally
-      const filePath = process.cwd() + "/public/images/" + imageName;
-      profile.mv(filePath, (error) => {
-        if (error) throw error;
-      });
+      // create the local file path using image and saving the file locally
+      const imageName = uploadFileLocally(image);
 
       //   add the image and user_id to the payload object
       payload.image = imageName;
+
+      // remove the previously updloaded news image
+      removeImage(user.image);
 
       // save the new changes in the stored user object
       await prisma.users.update({
@@ -64,11 +76,11 @@ export class ProfileController {
 
       res.status(200).json({
         status: 200,
-        message: "User profile updated successfully.",
+        message: "User image updated successfully.",
         data: {
-          name: profile.name,
-          mime: profile.mimetype,
-          size: profile?.size,
+          name: image.name,
+          mime: image.mimetype,
+          size: image?.size,
         },
       });
     } catch (error) {

@@ -14,7 +14,7 @@ export class NewsApiTransform {
         image:
           news?.user?.image != null
             ? generateImageUrl(news?.user?.image)
-            : generateImageUrl("avatar.jpg"),
+            : generateImageUrl("js.png"),
       },
       created_at: news.created_at,
     };

@@ -2,7 +2,11 @@ import vine, { errors } from "@vinejs/vine";
 
 import { NewsApiTransform } from "../transform/NewsApiTransform.js";
 import { newsSchema } from "../validation/news.validation.js";
-import { generateRandomName, imageValidator } from "../utils/helper.js";
+import {
+  generateRandomName,
+  imageValidator,
+  uploadFileLocally,
+} from "../utils/helper.js";
 import prisma from "../DB/db.config.js";
 
 export class NewsController {
@@ -49,7 +53,7 @@ export class NewsController {
       // sending the metadata along with news payload
       res.status(200).json({
         status: 200,
-        data: transformNews,
+        news: transformNews,
         metadata: {
           totalPages,
           current_page: page,
@@ -57,14 +61,13 @@ export class NewsController {
         },
       });
     } catch (error) {
-      console.log({ error });
       return res
         .status(500)
         .json({ status: 500, message: "Something went wrong." });
     }
   }
 
-  static async create(req, res) {
+  static async createNews(req, res) {
     try {
       const user = req.user;
       const body = req.body;
@@ -117,6 +120,106 @@ export class NewsController {
       });
     } catch (error) {
       console.log({ error });
+      if (error instanceof errors.E_VALIDATION_ERROR) {
+        res.status(400).json({ errors: error.messages });
+      } else {
+        res.status(500).json({
+          status: 500,
+          message: "Something went wrong. Please try again.",
+        });
+      }
+    }
+  }
+
+  static async getNewsById(req, res) {
+    try {
+      const user = req.user;
+      const id = Number(req.params.id);
+
+      const news = await prisma.news.findUnique({
+        where: {
+          id,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+      });
+
+      res
+        .status(200)
+        .json({ status: 200, news: NewsApiTransform.transform(news) });
+    } catch (error) {
+      console.log({ error });
+      return res
+        .status(500)
+        .json({ status: 500, message: "Something went wrong." });
+    }
+  }
+
+  static async updateNews(req, res) {
+    try {
+      const user = req.user;
+      const id = req.params.id;
+      const body = req.body;
+
+      // fetch the news using news_id
+      const news = await prisma.news.findUnique({
+        where: {
+          id: Number(id),
+        },
+      });
+
+      // check if the user is same as the one who post this news
+      if (user.id !== news.user_id) {
+        return res
+          .status(400)
+          .json({ status: 400, message: "User is unauthorized." });
+      }
+
+      // validate the request body
+      const validator = vine.compile(newsSchema);
+      const payload = validator.validate(body);
+
+      const image = req?.files?.image;
+
+      if (image) {
+        // check the image size and mimetype
+        const imageValidationError = imageValidator(
+          image?.size,
+          image.mimetype
+        );
+
+        if (imageValidationError !== null) {
+          return res
+            .status(400)
+            .json({ status: 400, errors: { image: imageValidationError } });
+        }
+
+        // create the local file path using image and saving the file locally
+        const imageName = uploadFileLocally(image);
+
+        payload.image = imageName;
+
+        // remove the previously updloaded news image
+        removeImage(news.image);
+      }
+
+      console.log({ payload });
+
+      await prisma.news.update({
+        data: payload,
+        where: {
+          id: Number(id),
+        },
+      });
+    } catch (error) {
       if (error instanceof errors.E_VALIDATION_ERROR) {
         res.status(400).json({ errors: error.messages });
       } else {
