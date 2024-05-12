@@ -9,7 +9,28 @@ export class NewsController {
   static async getNews(req, res) {
     try {
       const user = req.user;
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 1;
+
+      // validate the correct page size and limit
+      if (page <= 0) {
+        page = 1;
+      }
+
+      if (limit <= 0 || limit > 100) {
+        limit = 10;
+      }
+
+      // assign the skip value while fetching the news data
+      const skip = (page - 1) * limit;
+
+      // calculate the total_pages from the news_count and limit values
+      const newsCount = await prisma.news.count();
+      const totalPages = Math.ceil(newsCount / limit);
+
       const news = await prisma.news.findMany({
+        take: limit,
+        skip: skip,
         include: {
           user: {
             select: {
@@ -24,7 +45,17 @@ export class NewsController {
       const transformNews = news?.map((item) =>
         NewsApiTransform.transform(item)
       );
-      res.status(200).json({ status: 200, data: transformNews });
+
+      // sending the metadata along with news payload
+      res.status(200).json({
+        status: 200,
+        data: transformNews,
+        metadata: {
+          totalPages,
+          current_page: page,
+          page_limit: limit,
+        },
+      });
     } catch (error) {
       console.log({ error });
       return res
@@ -95,6 +126,5 @@ export class NewsController {
         });
       }
     }
-    const user = req.user;
   }
 }

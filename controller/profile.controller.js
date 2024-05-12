@@ -49,6 +49,9 @@ export class ProfileController {
         if (error) throw error;
       });
 
+      //   add the image and user_id to the payload object
+      payload.image = imageName;
+
       // save the new changes in the stored user object
       await prisma.users.update({
         data: {
