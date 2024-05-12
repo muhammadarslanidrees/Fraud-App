@@ -5,6 +5,7 @@ import { newsSchema } from "../validation/news.validation.js";
 import {
   generateRandomName,
   imageValidator,
+  removeImage,
   uploadFileLocally,
 } from "../utils/helper.js";
 import prisma from "../DB/db.config.js";
@@ -185,7 +186,7 @@ export class NewsController {
 
       // validate the request body
       const validator = vine.compile(newsSchema);
-      const payload = validator.validate(body);
+      const payload = await validator.validate(body);
 
       const image = req?.files?.image;
 
@@ -211,15 +212,17 @@ export class NewsController {
         removeImage(news.image);
       }
 
-      console.log({ payload });
-
       await prisma.news.update({
         data: payload,
         where: {
           id: Number(id),
         },
       });
+
+      res.status(200).json({ status: 200, message: "News Updated Successfully", payload: payload })
+
     } catch (error) {
+      console.log(error)
       if (error instanceof errors.E_VALIDATION_ERROR) {
         res.status(400).json({ errors: error.messages });
       } else {

@@ -1,11 +1,20 @@
-import { imageValidator, uploadFileLocally } from "../utils/helper.js";
+import { imageValidator, removeImage, uploadFileLocally } from "../utils/helper.js";
 import prisma from "../DB/db.config.js";
 
 export class ProfileController {
-  static getUser(req, res) {
+  static async getUser(req, res) {
     try {
       const user = req.user;
-      res.status(200).json({ status: 200, user });
+      // fetch the user from db
+      const userData = await prisma.users.findUnique({
+        where: {
+          id: Number(user.id)
+        }
+      });
+
+      // remove the password in the response 
+      const { password, ...rest } = userData;
+      res.status(200).json({ status: 200, user: rest });
     } catch (error) {
       return res
         .status(500)
@@ -34,7 +43,7 @@ export class ProfileController {
           .status(400)
           .json({ status: 400, message: "User is unauthorized." });
       }
-
+      
       // check whether we have the profile object in req.files
       if (!req.files || Object.keys(req.files).length === 0) {
         return res.status(400).json({
@@ -57,9 +66,6 @@ export class ProfileController {
 
       // create the local file path using image and saving the file locally
       const imageName = uploadFileLocally(image);
-
-      //   add the image and user_id to the payload object
-      payload.image = imageName;
 
       // remove the previously updloaded news image
       removeImage(user.image);
@@ -84,6 +90,7 @@ export class ProfileController {
         },
       });
     } catch (error) {
+      console.log(error)
       return res
         .status(500)
         .json({ status: 500, message: "Something went wrong." });
