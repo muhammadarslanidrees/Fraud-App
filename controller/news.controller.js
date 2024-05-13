@@ -153,9 +153,8 @@ export class NewsController {
         },
       });
 
-      res
-        .status(200)
-        .json({ status: 200, news: NewsApiTransform.transform(news) });
+      const transformNews = news ? NewsApiTransform.transform(news) : null;
+      res.status(200).json({ status: 200, news: transformNews });
     } catch (error) {
       console.log({ error });
       return res
@@ -180,8 +179,8 @@ export class NewsController {
       // check if the user is same as the one who post this news
       if (user.id !== news.user_id) {
         return res
-          .status(400)
-          .json({ status: 400, message: "User is unauthorized." });
+          .status(401)
+          .json({ status: 401, message: "User is unauthorized." });
       }
 
       // validate the request body
@@ -209,7 +208,7 @@ export class NewsController {
         payload.image = imageName;
 
         // remove the previously updloaded news image
-        removeImage(news.image);
+        await removeImage(news.image);
       }
 
       await prisma.news.update({
@@ -219,10 +218,13 @@ export class NewsController {
         },
       });
 
-      res.status(200).json({ status: 200, message: "News Updated Successfully", payload: payload })
-
+      res.status(200).json({
+        status: 200,
+        message: "News Updated Successfully",
+        payload: payload,
+      });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       if (error instanceof errors.E_VALIDATION_ERROR) {
         res.status(400).json({ errors: error.messages });
       } else {
@@ -231,6 +233,47 @@ export class NewsController {
           message: "Something went wrong. Please try again.",
         });
       }
+    }
+  }
+
+  static async deleteNews(req, res) {
+    try {
+      const user = req.user;
+      const id = Number(req.params.id);
+
+      // fetch the news using news_id params
+      const news = await prisma.news.findUnique({
+        where: {
+          id,
+        },
+      });
+
+      // check to see if the user is same as the one who created this news
+      if (user.id !== news.user_id) {
+        return res
+          .status(401)
+          .json({ status: 401, message: "User is unauthorized." });
+      }
+
+      // remove the news image from local filesystem
+      await removeImage(news.image);
+
+      // delete the news from the news database
+      await prisma.news.delete({
+        where: {
+          id,
+        },
+      });
+
+      res.status(200).json({
+        status: 200,
+        message: `News with id ${id} has been deleted successfully.`,
+      });
+    } catch (error) {
+      console.log(error);
+      return res
+        .status(500)
+        .json({ status: 500, message: "Something went wrong." });
     }
   }
 }

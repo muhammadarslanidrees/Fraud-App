@@ -9,5 +9,6 @@ router.get("/get", NewsController.getNews);
 router.post("/create", JwtMiddleware, NewsController.createNews);
 router.get("/get/:id", JwtMiddleware, NewsController.getNewsById);
 router.put("/update/:id", JwtMiddleware, NewsController.updateNews);
+router.delete("/delete/:id", JwtMiddleware, NewsController.deleteNews);
 
 export default router;

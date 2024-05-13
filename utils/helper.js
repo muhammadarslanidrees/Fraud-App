@@ -40,13 +40,15 @@ export const uploadFileLocally = (profile) => {
   return imageName;
 };
 
-export const removeImage = (imageName) => {
+export const removeImage = async (imageName) => {
   // construct the local file path of the image that we need to delete
   const filePath = process.cwd() + "/public/images/" + imageName;
 
   // check if the file exists at the path
   if (fs.existsSync(filePath)) {
     // unlink or delete the file from that location
-    fs.unlinkSync(filePath);
+    fs.unlink(filePath, (error) => {
+      if (error) throw error;
+    });
   }
 };
