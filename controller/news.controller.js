@@ -9,13 +9,14 @@ import {
   uploadFileLocally,
 } from "../utils/helper.js";
 import prisma from "../DB/db.config.js";
+import redisCache from "../DB/redis.config.js";
 
 export class NewsController {
   static async getNews(req, res) {
     try {
       const user = req.user;
       const page = Number(req.query.page) || 1;
-      const limit = Number(req.query.limit) || 1;
+      const limit = Number(req.query.limit) || 10;
 
       // validate the correct page size and limit
       if (page <= 0) {
@@ -112,6 +113,11 @@ export class NewsController {
       // save the new news object in the stored News table
       const news = await prisma.news.create({
         data: payload,
+      });
+
+      // delete the redis cache for the /api/news route
+      redisCache.del("/api/news", (error) => {
+        if (error) throw error;
       });
 
       res.status(201).json({
@@ -218,6 +224,11 @@ export class NewsController {
         },
       });
 
+      // delete the redis cache for the /api/news route
+      redisCache.del("/api/news", (error) => {
+        if (error) throw error;
+      });
+
       res.status(200).json({
         status: 200,
         message: "News Updated Successfully",
@@ -263,6 +274,11 @@ export class NewsController {
         where: {
           id,
         },
+      });
+
+      // delete the redis cache for the /api/news route
+      redisCache.del("/api/news", (error) => {
+        if (error) throw error;
       });
 
       res.status(200).json({
