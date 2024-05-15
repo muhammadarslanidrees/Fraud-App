@@ -35,6 +35,7 @@ export class AuthController {
         data: payload,
       });
 
+      logger.info("User created successfully.")
       // returning response to the user
       res.status(201).json({
         status: 201,
@@ -42,6 +43,7 @@ export class AuthController {
         data: user,
       });
     } catch (error) {
+      logger.error(error?.message)
       if (error instanceof errors.E_VALIDATION_ERROR) {
         res.status(400).json({ errors: error.messages });
       } else {
@@ -91,6 +93,7 @@ export class AuthController {
         expiresIn: "10d",
       });
 
+      logger.info("User logged in successfully.")
       // return the response to user along with access_token
       res.status(200).json({
         status: 200,
@@ -98,6 +101,7 @@ export class AuthController {
         access_token: `Bearer ${token}`,
       });
     } catch (error) {
+      logger.error(error?.message)
       if (error instanceof errors.E_VALIDATION_ERROR) {
         res.status(400).json({ errors: error.messages });
       } else {

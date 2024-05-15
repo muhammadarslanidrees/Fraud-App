@@ -16,6 +16,7 @@ export class ProfileController {
       const { password, ...rest } = userData;
       res.status(200).json({ status: 200, user: rest });
     } catch (error) {
+      logger.error(error?.message)
       return res
         .status(500)
         .json({ status: 500, message: "Something went wrong." });
@@ -25,7 +26,6 @@ export class ProfileController {
   static async updateUser(req, res) {
     try {
       const id = Number(req.params.id);
-      console.log({ id });
 
       // getting the user using params id
       const user = await prisma.users.findUnique({
@@ -34,11 +34,8 @@ export class ProfileController {
         },
       });
 
-      console.log({ user });
-
       // checking if the user is same as the one whose account we are updating
       if (user.id !== id) {
-        console.log("Error inside the if block...");
         return res
           .status(400)
           .json({ status: 400, message: "User is unauthorized." });
@@ -80,6 +77,7 @@ export class ProfileController {
         },
       });
 
+      logger.info("User image updated successfully.")
       res.status(200).json({
         status: 200,
         message: "User image updated successfully.",
@@ -90,7 +88,7 @@ export class ProfileController {
         },
       });
     } catch (error) {
-      console.log(error)
+      logger.error(error?.message)
       return res
         .status(500)
         .json({ status: 500, message: "Something went wrong." });

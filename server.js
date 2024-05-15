@@ -5,7 +5,7 @@ import helmet from "helmet";
 import "dotenv/config";
 
 import apiRouter from "./routes/router.js";
-import { rateLimiter } from "./config/rateLimiter.js";
+import rateLimiter from "./config/rateLimiter.js";
 
 const app = express();
 

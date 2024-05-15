@@ -10,6 +10,7 @@ import {
 } from "../utils/helper.js";
 import prisma from "../DB/db.config.js";
 import redisCache from "../DB/redis.config.js";
+import logger from "../config/logger.js";
 
 export class NewsController {
   static async getNews(req, res) {
@@ -63,6 +64,7 @@ export class NewsController {
         },
       });
     } catch (error) {
+      logger.error(error?.message)
       return res
         .status(500)
         .json({ status: 500, message: "Something went wrong." });
@@ -96,15 +98,7 @@ export class NewsController {
           .json({ status: 400, errors: { image: imageValidationError } });
       }
 
-      // generate the random filename and attach it with file extension
-      const imageExtension = image.name.split(".")[1];
-      const imageName = generateRandomName() + "." + imageExtension;
-
-      // construct the local file path to save the file locally
-      const filePath = process.cwd() + "/public/images/" + imageName;
-      image.mv(filePath, (error) => {
-        if (error) throw error;
-      });
+      const imageName = uploadFileLocally(image)
 
       //   add the image and user_id to the payload object
       payload.image = imageName;
@@ -120,13 +114,14 @@ export class NewsController {
         if (error) throw error;
       });
 
+      logger.info("News has been created successfully.")
       res.status(201).json({
         status: 201,
-        message: "News entry created successfully.",
+        message: "News has been created successfully.",
         news,
       });
     } catch (error) {
-      console.log({ error });
+      logger.error(error?.message)
       if (error instanceof errors.E_VALIDATION_ERROR) {
         res.status(400).json({ errors: error.messages });
       } else {
@@ -162,7 +157,7 @@ export class NewsController {
       const transformNews = news ? NewsApiTransform.transform(news) : null;
       res.status(200).json({ status: 200, news: transformNews });
     } catch (error) {
-      console.log({ error });
+      logger.error(error?.message)
       return res
         .status(500)
         .json({ status: 500, message: "Something went wrong." });
@@ -229,13 +224,14 @@ export class NewsController {
         if (error) throw error;
       });
 
+      logger.info("News Updated Successfully.")
       res.status(200).json({
         status: 200,
         message: "News Updated Successfully",
         payload: payload,
       });
     } catch (error) {
-      console.log(error);
+      logger.error(error?.message)
       if (error instanceof errors.E_VALIDATION_ERROR) {
         res.status(400).json({ errors: error.messages });
       } else {
@@ -281,12 +277,13 @@ export class NewsController {
         if (error) throw error;
       });
 
+      logger.info(`News with id ${id} has been deleted successfully.`)
       res.status(200).json({
         status: 200,
         message: `News with id ${id} has been deleted successfully.`,
       });
     } catch (error) {
-      console.log(error);
+      logger.error(error?.message)
       return res
         .status(500)
         .json({ status: 500, message: "Something went wrong." });

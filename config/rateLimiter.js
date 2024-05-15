@@ -1,6 +1,6 @@
 import { rateLimit } from "express-rate-limit";
 
-export const rateLimiter = rateLimit({
+const rateLimiter = rateLimit({
   windowMs: 15 * 60 * 60, // How long to remember requests for, in milliseconds (15 minutes)
   limit: 50, // Limit each IP to 50 requests per `window` (here, per 15 minutes).
   standardHeaders: "draft-7",
@@ -12,3 +12,5 @@ export const rateLimiter = rateLimit({
   statusCode: 429,
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
 });
+
+export default rateLimiter
